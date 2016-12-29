@@ -48,8 +48,8 @@
 
 (defn init []
   (println "starting app...")
-  (buckets/init)
   (lifesaver/init)
+  (buckets/init)
   (wrap-defaults app-routes site-defaults))
 
 (def app

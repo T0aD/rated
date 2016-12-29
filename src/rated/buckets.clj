@@ -4,6 +4,7 @@
 ;      [clojure.core.async :as async]
       [clojure.java.io :as io]
 ))
+(require '[rated.lifesaver :as lifesaver])
 
 ; default configuration
 (def DEFAULT_TTL 60)
@@ -77,7 +78,7 @@
             timestamp (ts ttl)]
 ;        (println "ttl for bucket" name "is" ttl)
 ;        (println "timestamp generated" (now) timestamp (- timestamp (now)))
-        (println (format "bucket %s queue: %d/%d" name (count queue) len))
+;        (println (format "bucket %s queue: %d/%d" name (count queue) len))
         ; the magic is here
         (if (<= len (count queue))
           (do ;(println "limit reached!")
@@ -120,6 +121,7 @@
 (defn garbage_collector [wait_period]
   (println "garbage collector started")
   (loop [x 0]
+    (lifesaver/update-tick "buckets/gc")
 ;    (println "--> gc up")
 ;    (mapv (fn [[name bucket]] (clean_queues name bucket)) @buckets)
     (swap! buckets clean_buckets)
@@ -130,13 +132,14 @@
       (recur (inc x))
       (println "gc ended" @buckets))
 
-
+; could be move to final lib with mongo/mysql dependency...:
 (def runs (atom 0))
 (defn persistor [interval]
   (def last-persist (atom (now-ms)))
   (loop []
+    (lifesaver/update-tick "buckets/persistor")
     ;(swap! runs inc)
-    (println "persistor-thread: synced?" @synced? "since" (delta @last-persist) "ms")
+;    (println "persistor-thread: synced?" @synced? "since" (delta @last-persist) "ms")
     (if (not @synced?)
       (do
         (println "syncing after" (delta @last-persist) "ms")
@@ -159,6 +162,7 @@
       ;(println "executed" expression "after" wait "ms")
       (eval expression))
       (if (<= x times) (recur(inc x)))))
+
 
 (defn init []
   (println "buckets.clj init")
