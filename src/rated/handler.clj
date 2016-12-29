@@ -2,14 +2,19 @@
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
-	    [cheshire.core :as json]
-      [clojure.core.async :as async]
-      [clojure.java.io :as io]
+	          [cheshire.core :as json]
+            [clojure.java.io :as io]
+            [org.httpkit.server :as httpkit]
+            [clojure.tools.cli :as cli]
+            [rated.lifesaver :as lifesaver]
+            [rated.buckets :as buckets]
+;            [api.mongo-adapter :as mongo]
+      ;      [clojure.core.async :as async]
 ;      [clojure.tools.logging :as log]
 ;      [org.httpkit.server :refer [run-server]]
 ))
-(require '[rated.buckets :as buckets])
-(require '[rated.lifesaver :as lifesaver])
+;(require '[rated.buckets :as buckets])
+;(require '[rated.lifesaver :as lifesaver])
 
 (defn http_response [hm]
   "Generates the default hash-map of a HTTP response"
@@ -46,11 +51,16 @@
   (PUT "/" [] http_put)
   (route/not-found "Not Found"))
 
+
 (defn init []
-  (println "starting app...")
-  (lifesaver/init)
-  (buckets/init)
+  ;(println "starting app...")
+  ;(lifesaver/init)
+  ;(buckets/init)
   (wrap-defaults app-routes site-defaults))
 
 (def app
+  app-routes)
+;  (wrap-defaults app-routes site-defaults))
+
+#_(def app
   (init))

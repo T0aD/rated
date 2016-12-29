@@ -1,10 +1,7 @@
 (ns rated.buckets
-  (:require
-;	    [cheshire.core :as json]
-;      [clojure.core.async :as async]
-      [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
+            [rated.lifesaver :as lifesaver]
 ))
-(require '[rated.lifesaver :as lifesaver])
 
 ; default configuration
 (def DEFAULT_TTL 60)

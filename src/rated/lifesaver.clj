@@ -11,7 +11,7 @@
 (defn alerter [mentry]
   (let [name (key mentry) value (val mentry) current (now)
       delta (- current value)]
-    (if (> delta 5)
+    (if (> delta 30)
       (do
         (println (format "lifesaver-alerter: %s tick last received %d sec ago" name delta))
         (println "aborting process....")
