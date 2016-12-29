@@ -77,7 +77,7 @@
             timestamp (ts ttl)]
 ;        (println "ttl for bucket" name "is" ttl)
 ;        (println "timestamp generated" (now) timestamp (- timestamp (now)))
-;        (println "status is" @status)
+        (println (format "bucket %s queue: %d/%d" name (count queue) len))
         ; the magic is here
         (if (<= len (count queue))
           (do ;(println "limit reached!")
@@ -167,9 +167,12 @@
 
   (post_bucket "pierrot" {:len 20 :ttl 16})
   (post_bucket "toad" {:len 20 :ttl 18})
-  (future (dontimes 100 '(add_queue "pierrot")))
-  (future (dontimes 200 '(add_queue "toad")))
-
+  ;(add_queue "toad")
+  ;(add_queue "toad")
+  ;(add_queue "toad")
+  ;(dontimes 100 '(rated.buckets/add_queue "pierrot"))
+  (future (dontimes 100 '(rated.buckets/add_queue "pierrot")))
+  ;(future (dontimes 200 '(rated.buckets/add_queue "toad")))
   (println "buckets.clj end-of-init"))
 
 (defn -mainOLD

@@ -9,12 +9,15 @@
 ;      [org.httpkit.server :refer [run-server]]
 ))
 (require '[rated.buckets :as buckets])
+(require '[rated.lifesaver :as lifesaver])
+
+(defn http_response [hm]
+  "Generates the default hash-map of a HTTP response"
+  (merge {:status 200 :headers {"Content-Type" "application/json"}} hm))
 
 (defn json_response [hm]
-  (let [response { :status 200
-     :headers {"Content-Type" "application/json"}
-     :body (json/generate-string hm)}]
-     (println "response is" response)
+  (let [response (http_response {:body (json/generate-string hm)})]
+     (println "response sent" response)
      response
   ))
 
@@ -24,18 +27,29 @@
   (json_response {:name "Sexy API" :status "Sexy"})
 )
 
+(defn put_queue [name]
+  (let [status (buckets/add_queue name)]
+    (println "status is" status))
+  )
+
+(defn http_put [req]
+  (println "put received")
+  (put_queue "pierrot")
+  (json_response {:status "OK"}))
+
 ; https://learnxinyminutes.com/docs/compojure/
 (defroutes app-routes
 ;  (GET "/" [] "Hello World")
   (GET "/" [] http_get)
   (DELETE "/" [] "DELETE")
   (POST "/" [] "POST")
-  (PUT "/" [] "PUT")
+  (PUT "/" [] http_put)
   (route/not-found "Not Found"))
 
 (defn init []
   (println "starting app...")
   (buckets/init)
+  (lifesaver/init)
   (wrap-defaults app-routes site-defaults))
 
 (def app
