@@ -22,33 +22,49 @@
 
 (defn json_response [hm]
   (let [response (http_response {:body (json/generate-string hm)})]
-     (println "response sent" response)
+     ;(println "response sent" response)
      response
   ))
 
 (defn http_get [req]
-  (println "received request" (:request-method req) (:uri req))
+  ;(println "received request" (:request-method req) (:uri req))
   ;(print "synced:" @buckets/synced? "buckets is" @buckets/buckets))
   (json_response {:name "Sexy API" :status "Sexy"})
 )
 
+(defn pre [expr]
+  (println expr)
+  expr)
+
 (defn put_queue [name]
   (let [status (buckets/add_queue name)]
-    (println "status is" status))
-  )
+    (println "putting into" name)
+    ;(println "status is" status)
+    (case status
+      :ok   (http_response {:status 200 :body ""})
+      :no   (http_response {:status 429 :body (json/generate-string {:state "full"})})
+      :none (http_response {:status 404}))))
 
-(defn http_put [req]
-  (println "put received")
-  (put_queue "pierrot")
-  (json_response {:status "OK"}))
+(defn http_put [name]
+  (put_queue name))
+
+(defn post_bucket [name]
+  (buckets/post_bucket name {:ttl 3 :len 10})
+  (http_response {}))
+
+(defn del_bucket [name]
+  (buckets/delete_bucket name)
+  ;(println @buckets/buckets)
+  (http_response {:status 200}))
+
 
 ; https://learnxinyminutes.com/docs/compojure/
 (defroutes app-routes
 ;  (GET "/" [] "Hello World")
   (GET "/" [] http_get)
-  (DELETE "/" [] "DELETE")
-  (POST "/" [] "POST")
-  (PUT "/" [] http_put)
+  (DELETE "/:name" [name] (del_bucket name))
+  (POST "/:name" [name] (post_bucket name))
+  (PUT "/:name" [name] (http_put name))
   (route/not-found "Not Found"))
 
 

@@ -22,6 +22,9 @@
 ; DELETE a bucket
 (defn delete_bucket [name]
   (println "-" name)
+  (if (nil? (get @buckets name))
+    (println "bucket" name "does not exist!")
+  )
   (swap! buckets dissoc name)
 )
 
@@ -66,9 +69,13 @@
 
 
 (defn add_queue [name]
-  (let [status (atom :free)]
+  (let [status (atom :ok)]
     (swap! buckets
       (fn [bs]
+        (if (nil? (get bs name))
+          (do
+;            (println name "doesnt exist!")
+            (reset! status :none))
         (let [ttl (get-in bs [name :ttl])
             len (get-in bs [name :len])
             queue (get-in bs [name :queue])
@@ -80,18 +87,18 @@
         (if (<= len (count queue))
           (do ;(println "limit reached!")
             ; how to notify caller with return value
-            (reset! status :full)
+            (reset! status :no)
             ; return unchanged buckets hashmap
             bs)
           (do ;(println "free room ! welcome!")
             ; insert new item in queue and returns modified bucket
             (assoc-in bs [name :queue] (add_queue_item queue timestamp))
-          )
+          ))
           ))))
         @status)
 )
 
-(defn map-vals [f hm] (into {} (map (fn [[k v]] [k (f v)]) hm)))
+(defn map-vals [f hm] (into {} (mapv (fn [[k v]] [k (f v)]) hm)))
 
 ; remove entries with old timestamps from queues of this bucket
 (defn old? [current item]
@@ -103,9 +110,10 @@
         new_queue (remove (partial old? current) queue)]
         (let [new_count (count new_queue) old_count (count queue)
             delta (- old_count new_count)]
-            (if (> delta 0) (println "gc removed" delta "entries"))
-            (if (> delta 0) (reset! synced? false))
-            )
+            (when (> delta 0)
+              (println "gc removed" delta "entries")
+              (reset! synced? false)
+            ))
         new_queue))
 
 (defn clean_buckets [buckets]
@@ -115,16 +123,16 @@
   ))
 
 
-(defn garbage_collector [wait_period]
+(defn garbage_collector [interval]
   (println "garbage collector started")
   (loop [x 0]
     (lifesaver/update-tick "buckets/gc")
-;    (println "--> gc up")
-;    (mapv (fn [[name bucket]] (clean_queues name bucket)) @buckets)
+    ;(println "--> gc up" x)
+    ;(mapv (fn [[name bucket]] (clean_queues name bucket)) @buckets)
     (swap! buckets clean_buckets)
-;    (println "<-- gc down")
-    (Thread/sleep wait_period)
-    (recur (x))))
+    ;(println "<-- gc down")
+    (Thread/sleep (* 1000 interval))
+    (recur x)))
     #_(if (< x 20)
       (recur (inc x))
       (println "gc ended" @buckets))
@@ -144,7 +152,7 @@
         (reset! last-persist (now-ms))
         )
       )
-    (Thread/sleep (* 500 interval))
+    (Thread/sleep (* 1000 interval))
     (recur)
     #_(if (< @runs 20)
       (recur)
@@ -163,22 +171,11 @@
 
 (defn init []
   (println "buckets.clj init")
-  (future (persistor 2))
-  (future (garbage_collector 1000))
+  (future (persistor 4))
+  (future (garbage_collector 1))
 
   (post_bucket "pierrot" {:len 20 :ttl 16})
   (post_bucket "toad" {:len 20 :ttl 18})
-  ;(add_queue "toad")
-  ;(add_queue "toad")
-  ;(add_queue "toad")
-  ;(dontimes 100 '(rated.buckets/add_queue "pierrot"))
-  (future (dontimes 100 '(rated.buckets/add_queue "pierrot")))
+  ;(future (dontimes 100 '(rated.buckets/add_queue "pierrot")))
   ;(future (dontimes 200 '(rated.buckets/add_queue "toad")))
   (println "buckets.clj end-of-init"))
-
-(defn -mainOLD
-  [& args]
-  (post_bucket "pierrot" {:len 20 :ttl 16})
-  (post_bucket "toad" {:len 20 :ttl 18})
-  (future (dontimes 100 '(add_queue "pierrot")))
-)

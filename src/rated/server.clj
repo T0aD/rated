@@ -8,11 +8,12 @@
   ))
 
 (def cli-options
-[["-p" "--port PORT" "Port number"
-  :default 3000
+[["-p" "--port PORT" "Port number" :default 3000
   :parse-fn #(Integer/parseInt %)
   :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65535"]]
- [nil "--mongo-uri STRING" "uri of mongo database ex: \"mongodb://m3.vigiglo.be:31592/spritz\""
+  [nil "--gc-interval INT" "Interval in seconds of garbage collector"]
+  [nil "--persistor-interval INT" "Interval in between to check for persistency of data"]
+  [nil "--mongo-uri STRING" "MongoDB address"
   :default "mongodb://m3.vigiglo.be:31592/spritz"]])
 
 (defonce server (atom nil))

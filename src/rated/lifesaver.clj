@@ -11,7 +11,7 @@
 (defn alerter [mentry]
   (let [name (key mentry) value (val mentry) current (now)
       delta (- current value)]
-    (if (> delta 30)
+    (if (> delta 10)
       (do
         (println (format "lifesaver-alerter: %s tick last received %d sec ago" name delta))
         (println "aborting process....")
@@ -32,9 +32,7 @@
 (defn update-tick [name]
   "Updates a specific tick"
   (swap! ticks assoc name (now)))
-;  (println "- new ticks:" @ticks))
 
 (defn init []
   (println "rated.lifesaver started")
-  (future (supervisor))
-  )
+    (future (supervisor)))
